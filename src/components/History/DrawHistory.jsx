@@ -1,0 +1,99 @@
+import { Clock, Download, Trash2, RotateCcw } from 'lucide-react';
+import { downloadHistoryCSV } from '../../utils/exporter';
+
+export default function DrawHistory({
+  history,
+  onClearHistory,
+  onUndoLastDraw,
+}) {
+  if (history.length === 0) {
+    return (
+      <div className="card p-8 text-center">
+        <Clock className="w-12 h-12 mx-auto text-gray-500 mb-3" />
+        <p className="text-gray-400">
+          No draws yet. Perform a draw to see history here.
+        </p>
+      </div>
+    );
+  }
+
+  const handleExportHistory = () => {
+    downloadHistoryCSV(history);
+  };
+
+  return (
+    <div className="card p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold text-pink-400">Draw History</h3>
+        <div className="text-lg font-bold text-gray-300">
+          {history.length} draw{history.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {history.map((draw, index) => (
+          <div
+            key={index}
+            className="bg-gray-700/50 border border-gray-600 rounded-lg p-4 space-y-2"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="font-semibold text-lg">Draw #{history.length - index}</p>
+                <p className="text-sm text-gray-400">
+                  {new Date(draw.timestamp).toLocaleTimeString()}
+                </p>
+              </div>
+              <span className="bg-gray-600 px-3 py-1 rounded-full text-sm font-semibold">
+                {draw.winners.length} winner{draw.winners.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <p className="text-gray-300">
+              <span className="font-semibold">Prize:</span> {draw.prizeLabel || 'N/A'}
+            </p>
+
+            <div className="text-sm">
+              <p className="font-semibold text-gray-300 mb-1">Winners:</p>
+              <div className="flex flex-wrap gap-2">
+                {draw.winners.map((winner, i) => (
+                  <span
+                    key={i}
+                    className="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded text-xs"
+                  >
+                    {winner}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 pt-4 border-t border-gray-700">
+        <button
+          onClick={handleExportHistory}
+          className="btn-secondary flex-1 flex items-center justify-center gap-2"
+        >
+          <Download className="w-5 h-5" />
+          Export All
+        </button>
+
+        <button
+          onClick={onUndoLastDraw}
+          className="btn-secondary flex items-center justify-center gap-2 px-6"
+          title="Undo the last draw and restore winners to the pool"
+        >
+          <RotateCcw className="w-5 h-5" />
+        </button>
+
+        <button
+          onClick={onClearHistory}
+          className="btn-secondary flex items-center justify-center gap-2 px-6 hover:bg-red-600"
+          title="Clear all history"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
