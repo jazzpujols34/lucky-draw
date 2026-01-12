@@ -3,6 +3,7 @@ import { useLuckyDraw } from './hooks/useLuckyDraw';
 import ManualInput from './components/CandidateInput/ManualInput';
 import FileUpload from './components/CandidateInput/FileUpload';
 import CandidateList from './components/CandidateInput/CandidateList';
+import PrizeSetup from './components/DrawConfig/PrizeSetup';
 import DrawSettings from './components/DrawConfig/DrawSettings';
 import DrawButton from './components/DrawConfig/DrawButton';
 import WinnerDisplay from './components/Results/WinnerDisplay';
@@ -14,12 +15,21 @@ export default function App() {
 
   const [prizeLabel, setPrizeLabel] = useState('');
   const [winnerCount, setWinnerCount] = useState(1);
+  const [selectedPrizeId, setSelectedPrizeId] = useState(null);
   const [drawError, setDrawError] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
 
   const handleCandidatesLoaded = (candidates) => {
     luckyDraw.setCandidates(candidates);
     setDrawError('');
+  };
+
+  const handlePrizeSelect = (prizeId, prizeName = '', count = 1) => {
+    setSelectedPrizeId(prizeId);
+    if (prizeId) {
+      setPrizeLabel(prizeName);
+      setWinnerCount(count);
+    }
   };
 
   const handleDraw = async () => {
@@ -30,7 +40,7 @@ export default function App() {
       // Simulate brief animation delay
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      luckyDraw.performDraw(winnerCount, prizeLabel);
+      luckyDraw.performDraw(winnerCount, prizeLabel, selectedPrizeId);
     } catch (err) {
       setDrawError(err.message);
     } finally {
@@ -61,7 +71,7 @@ export default function App() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Input & Config */}
+          {/* Left Column: Input & Prizes */}
           <div className="lg:col-span-1 space-y-6">
             <ManualInput onCandidatesLoaded={handleCandidatesLoaded} />
             <FileUpload onCandidatesLoaded={handleCandidatesLoaded} />
@@ -70,6 +80,12 @@ export default function App() {
               availableCandidates={luckyDraw.availableCount}
               onReset={luckyDraw.resetPool}
               onClear={luckyDraw.clearAll}
+            />
+            <PrizeSetup
+              prizes={luckyDraw.prizes}
+              onAddPrize={luckyDraw.addPrize}
+              onUpdatePrize={luckyDraw.updatePrize}
+              onDeletePrize={luckyDraw.deletePrize}
             />
           </div>
 
@@ -81,6 +97,9 @@ export default function App() {
               availableCount={luckyDraw.availableCount}
               onPrizeLabelChange={setPrizeLabel}
               onWinnerCountChange={setWinnerCount}
+              prizes={luckyDraw.prizes}
+              selectedPrizeId={selectedPrizeId}
+              onPrizeSelect={handlePrizeSelect}
             />
             <DrawButton
               isEnabled={luckyDraw.candidateCount > 0}
@@ -96,12 +115,12 @@ export default function App() {
               <>
                 <WinnerDisplay
                   winners={luckyDraw.currentDraw.winners}
-                  prizeLabel={luckyDraw.currentDraw.prizeLabel}
+                  prizeLabel={luckyDraw.currentDraw.prizeName}
                   timestamp={luckyDraw.currentDraw.timestamp}
                 />
                 <ResultActions
                   winners={luckyDraw.currentDraw.winners}
-                  prizeLabel={luckyDraw.currentDraw.prizeLabel}
+                  prizeLabel={luckyDraw.currentDraw.prizeName}
                 />
               </>
             )}

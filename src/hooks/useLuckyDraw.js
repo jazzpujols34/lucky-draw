@@ -1,11 +1,46 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { drawWinners } from '../utils/randomizer';
+import { loadPrizes, savePrizes, loadHistory, saveHistory, loadCandidates, saveCandidates } from '../utils/storage';
 
 export const useLuckyDraw = () => {
   const [candidatePool, setCandidatePool] = useState([]);
   const [availableCandidates, setAvailableCandidates] = useState([]);
   const [currentDraw, setCurrentDraw] = useState(null);
   const [history, setHistory] = useState([]);
+  const [prizes, setPrizes] = useState([]);
+  const [nextDrawNumber, setNextDrawNumber] = useState(1);
+
+  // Load prizes from localStorage on mount
+  useEffect(() => {
+    const savedPrizes = loadPrizes();
+    if (savedPrizes && savedPrizes.length > 0) {
+      setPrizes(savedPrizes);
+    }
+  }, []);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const savedHistory = loadHistory();
+    if (savedHistory && savedHistory.length > 0) {
+      setHistory(savedHistory);
+      // Calculate next draw number from history
+      const maxDrawNumber = Math.max(
+        0,
+        ...savedHistory.map(record => record.drawNumber || 0)
+      );
+      setNextDrawNumber(maxDrawNumber + 1);
+    }
+  }, []);
+
+  // Save prizes to localStorage whenever they change
+  useEffect(() => {
+    saveHistory(history);
+  }, [history]);
+
+  // Save prizes to localStorage whenever they change
+  useEffect(() => {
+    savePrizes(prizes);
+  }, [prizes]);
 
   // Set candidates from input (manual or file)
   const setCandidates = useCallback((candidates) => {
@@ -15,7 +50,7 @@ export const useLuckyDraw = () => {
   }, []);
 
   // Perform a draw
-  const performDraw = useCallback((count, prizeLabel = '') => {
+  const performDraw = useCallback((count, prizeLabel = '', prizeId = null) => {
     if (availableCandidates.length === 0) {
       throw new Error('No available candidates to draw from');
     }
@@ -31,9 +66,21 @@ export const useLuckyDraw = () => {
 
     // Create draw record
     const drawRecord = {
-      winners,
-      prizeLabel,
-      timestamp: new Date(),
+      id: crypto.randomUUID(),
+      prizeId: prizeId || null,
+      prizeName: prizeLabel,
+      expectedCount: count,
+      winners: winners.map(name => ({
+        name,
+        status: 'won',
+        forfeitedAt: null,
+        replacedBy: null,
+        isReplacement: false,
+        originalWinner: null,
+      })),
+      timestamp: Date.now(),
+      drawNumber: nextDrawNumber,
+      redrawHistory: [],
     };
 
     // Update state
@@ -46,8 +93,20 @@ export const useLuckyDraw = () => {
     // Add to history
     setHistory([...history, drawRecord]);
 
+    // Increment draw number for next draw
+    setNextDrawNumber(nextDrawNumber + 1);
+
+    // Mark prize as drawn if prizeId provided
+    if (prizeId) {
+      setPrizes(prevPrizes =>
+        prevPrizes.map(p =>
+          p.id === prizeId ? { ...p, status: 'drawn' } : p
+        )
+      );
+    }
+
     return drawRecord;
-  }, [availableCandidates, history]);
+  }, [availableCandidates, history, nextDrawNumber]);
 
   // Reset available pool (but keep history)
   const resetPool = useCallback(() => {
@@ -80,10 +139,72 @@ export const useLuckyDraw = () => {
     setHistory(newHistory);
     setCurrentDraw(newHistory.length > 0 ? newHistory[newHistory.length - 1] : null);
 
-    // Restore winners to available pool
-    const restoredAvailable = Array.from(new Set([...availableCandidates, ...lastDraw.winners]));
+    // Restore winners to available pool (handle both old and new winner formats)
+    const winnerNames = lastDraw.winners.map(w => typeof w === 'string' ? w : w.name);
+    const restoredAvailable = Array.from(new Set([...availableCandidates, ...winnerNames]));
     setAvailableCandidates(restoredAvailable);
+
+    // Reset prize status if it was drawn
+    if (lastDraw.prizeId) {
+      setPrizes(prevPrizes =>
+        prevPrizes.map(p =>
+          p.id === lastDraw.prizeId ? { ...p, status: 'active' } : p
+        )
+      );
+    }
+
+    // Decrement draw number
+    setNextDrawNumber(prev => Math.max(1, prev - 1));
   }, [history, availableCandidates]);
+
+  // Prize management methods
+  const addPrize = useCallback((name, winnerCount, description = '') => {
+    const newPrize = {
+      id: crypto.randomUUID(),
+      name,
+      winnerCount,
+      description,
+      createdAt: Date.now(),
+      status: 'active',
+    };
+    setPrizes([...prizes, newPrize]);
+    return newPrize.id;
+  }, [prizes]);
+
+  const updatePrize = useCallback((id, updates) => {
+    setPrizes(prevPrizes =>
+      prevPrizes.map(p =>
+        p.id === id ? { ...p, ...updates } : p
+      )
+    );
+  }, []);
+
+  const deletePrize = useCallback((id) => {
+    const prize = prizes.find(p => p.id === id);
+    if (prize && prize.status === 'drawn') {
+      throw new Error('Cannot delete a drawn prize');
+    }
+    setPrizes(prevPrizes => prevPrizes.filter(p => p.id !== id));
+  }, [prizes]);
+
+  // Load last event candidates from localStorage
+  const loadLastEventCandidates = useCallback(() => {
+    const lastCandidates = loadCandidates();
+    if (lastCandidates && lastCandidates.length > 0) {
+      setCandidates(lastCandidates);
+      return true;
+    }
+    return false;
+  }, []);
+
+  // Save current candidates to localStorage
+  const saveCurrentCandidates = useCallback(() => {
+    if (candidatePool && candidatePool.length > 0) {
+      saveCandidates(candidatePool);
+      return true;
+    }
+    return false;
+  }, [candidatePool]);
 
   return {
     // State
@@ -91,6 +212,8 @@ export const useLuckyDraw = () => {
     availableCandidates,
     currentDraw,
     history,
+    prizes,
+    nextDrawNumber,
 
     // Actions
     setCandidates,
@@ -100,9 +223,17 @@ export const useLuckyDraw = () => {
     clearHistory,
     undoLastDraw,
 
+    // Prize Management
+    addPrize,
+    updatePrize,
+    deletePrize,
+    loadLastEventCandidates,
+    saveCurrentCandidates,
+
     // Computed
     candidateCount: candidatePool.length,
     availableCount: availableCandidates.length,
     historyCount: history.length,
+    prizeCount: prizes.length,
   };
 };

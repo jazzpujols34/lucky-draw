@@ -49,7 +49,7 @@ export default function DrawHistory({
             </div>
 
             <p className="text-gray-300">
-              <span className="font-semibold">Prize:</span> {draw.prizeLabel || 'N/A'}
+              <span className="font-semibold">Prize:</span> {draw.prizeName || draw.prizeLabel || 'N/A'}
             </p>
 
             <div className="text-sm">
@@ -60,7 +60,7 @@ export default function DrawHistory({
                     key={i}
                     className="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded text-xs"
                   >
-                    {winner}
+                    {typeof winner === 'string' ? winner : winner.name}
                   </span>
                 ))}
               </div>

@@ -5,6 +5,15 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp }) {
     return null;
   }
 
+  // Handle both old (string[]) and new (WinnerObject[]) formats
+  const normalizedWinners = winners.map(w =>
+    typeof w === 'string' ? { name: w, status: 'won' } : w
+  );
+
+  // Filter to show only active winners (exclude forfeited ones)
+  const activeWinners = normalizedWinners.filter(w => w.status === 'won' && !w.isReplacement);
+  const displayWinners = activeWinners.length > 0 ? activeWinners : normalizedWinners;
+
   return (
     <div className="card p-8 space-y-6">
       <div className="text-center space-y-2">
@@ -21,7 +30,7 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {winners.map((winner, index) => (
+        {displayWinners.map((winner, index) => (
           <div
             key={index}
             className="bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border-2 border-emerald-500/50 rounded-xl p-8 text-center animate-fadeIn hover:shadow-lg hover:shadow-emerald-500/50 transition-shadow flex flex-col items-center justify-center min-h-40"
@@ -33,7 +42,7 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp }) {
               #{index + 1}
             </div>
             <p className="font-bold text-gray-100 px-2 text-sm sm:text-base md:text-lg break-words whitespace-normal">
-              {winner}
+              {winner.name || winner}
             </p>
           </div>
         ))}
@@ -41,7 +50,7 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp }) {
 
       <div className="bg-gray-700/50 rounded-lg p-4 text-center">
         <p className="text-2xl font-bold text-cyan-400">
-          {winners.length} {winners.length === 1 ? 'Winner' : 'Winners'}
+          {displayWinners.length} {displayWinners.length === 1 ? 'Winner' : 'Winners'}
         </p>
       </div>
     </div>
