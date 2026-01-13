@@ -206,6 +206,158 @@ export const useLuckyDraw = () => {
     return false;
   }, [candidatePool]);
 
+  // Forfeit methods
+  const markWinnerAsForfeited = useCallback((drawId, winnerName, reason = '') => {
+    setHistory(prevHistory =>
+      prevHistory.map(draw => {
+        if (draw.id === drawId) {
+          const updatedDraw = {
+            ...draw,
+            winners: draw.winners.map(w =>
+              w.name === winnerName
+                ? { ...w, status: 'forfeited', forfeitedAt: Date.now(), reason }
+                : w
+            ),
+          };
+          // Also update currentDraw if it's the current draw
+          if (currentDraw && currentDraw.id === drawId) {
+            setCurrentDraw(updatedDraw);
+          }
+          return updatedDraw;
+        }
+        return draw;
+      })
+    );
+  }, [currentDraw]);
+
+  const redrawForfeitedSlots = useCallback((drawId, reason = '') => {
+    const drawIndex = history.findIndex(d => d.id === drawId);
+    if (drawIndex === -1) {
+      throw new Error('Draw not found');
+    }
+
+    const draw = history[drawIndex];
+
+    // Find forfeited winners
+    const forfeited = draw.winners.filter(w => w.status === 'forfeited');
+    const countToRedraw = forfeited.length;
+
+    if (countToRedraw === 0) {
+      throw new Error('No forfeited winners to redraw');
+    }
+
+    // Build exclusion list
+    const exclude = new Set();
+
+    // Exclude all current winners (won or forfeited)
+    draw.winners.forEach(w => exclude.add(w.name));
+
+    // Exclude anyone in redraw history (prevent re-forfeit loop)
+    if (draw.redrawHistory) {
+      draw.redrawHistory.forEach(entry => {
+        exclude.add(entry.forfeitedWinner);
+        exclude.add(entry.replacementWinner);
+      });
+    }
+
+    // Filter candidate pool
+    const eligibleCandidates = availableCandidates.filter(
+      name => !exclude.has(name)
+    );
+
+    // Validate sufficient candidates
+    if (eligibleCandidates.length < countToRedraw) {
+      throw new Error(
+        `Not enough candidates (need ${countToRedraw}, have ${eligibleCandidates.length})`
+      );
+    }
+
+    // Draw new winners using Fisher-Yates
+    const newWinnersList = drawWinners(eligibleCandidates, countToRedraw);
+
+    // Create replacement winner objects
+    const replacements = newWinnersList.map((name, idx) => ({
+      name,
+      status: 'won',
+      forfeitedAt: null,
+      replacedBy: null,
+      isReplacement: true,
+      originalWinner: forfeited[idx].name,
+    }));
+
+    // Create redraw history entries
+    const redrawEntries = forfeited.map((original, idx) => ({
+      drawId,
+      forfeitedWinner: original.name,
+      replacementWinner: replacements[idx].name,
+      timestamp: Date.now(),
+      reason,
+    }));
+
+    // Update draw record
+    setHistory(prevHistory =>
+      prevHistory.map((draw, idx) => {
+        if (draw.id === drawId) {
+          return {
+            ...draw,
+            winners: [...draw.winners, ...replacements],
+            redrawHistory: [...(draw.redrawHistory || []), ...redrawEntries],
+          };
+        }
+        return draw;
+      })
+    );
+  }, [history, availableCandidates]);
+
+  const undoLastForfeit = useCallback((drawId) => {
+    const drawIndex = history.findIndex(d => d.id === drawId);
+    if (drawIndex === -1) {
+      throw new Error('Draw not found');
+    }
+
+    const draw = history[drawIndex];
+    if (!draw.redrawHistory || draw.redrawHistory.length === 0) {
+      throw new Error('No forfeits to undo');
+    }
+
+    // Get the last redraw entry
+    const lastRedraw = draw.redrawHistory[draw.redrawHistory.length - 1];
+
+    setHistory(prevHistory =>
+      prevHistory.map(d => {
+        if (d.id === drawId) {
+          // Remove the replacement winner
+          const updatedWinners = d.winners.filter(
+            w => w.name !== lastRedraw.replacementWinner
+          );
+
+          // Restore forfeited winner to won status
+          const finalWinners = updatedWinners.map(w =>
+            w.name === lastRedraw.forfeitedWinner
+              ? { ...w, status: 'won', forfeitedAt: null, replacedBy: null, reason: '' }
+              : w
+          );
+
+          // Remove last redraw entry
+          const updatedRedrawHistory = d.redrawHistory.slice(0, -1);
+
+          return {
+            ...d,
+            winners: finalWinners,
+            redrawHistory: updatedRedrawHistory,
+          };
+        }
+        return d;
+      })
+    );
+
+    // Restore replacement winner to available candidates
+    setAvailableCandidates(prev => [
+      ...prev,
+      lastRedraw.replacementWinner,
+    ]);
+  }, [history]);
+
   return {
     // State
     candidatePool,
@@ -229,6 +381,11 @@ export const useLuckyDraw = () => {
     deletePrize,
     loadLastEventCandidates,
     saveCurrentCandidates,
+
+    // Forfeit & Redraw
+    markWinnerAsForfeited,
+    redrawForfeitedSlots,
+    undoLastForfeit,
 
     // Computed
     candidateCount: candidatePool.length,

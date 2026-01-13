@@ -9,6 +9,8 @@ import DrawButton from './components/DrawConfig/DrawButton';
 import WinnerDisplay from './components/Results/WinnerDisplay';
 import ResultActions from './components/Results/ResultActions';
 import DrawHistory from './components/History/DrawHistory';
+import ForfeitManager from './components/Results/ForfeitManager';
+import RedrawHistory from './components/Results/RedrawHistory';
 
 export default function App() {
   const luckyDraw = useLuckyDraw();
@@ -18,6 +20,7 @@ export default function App() {
   const [selectedPrizeId, setSelectedPrizeId] = useState(null);
   const [drawError, setDrawError] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [forfeitManagerOpen, setForfeitManagerOpen] = useState(false);
 
   const handleCandidatesLoaded = (candidates) => {
     luckyDraw.setCandidates(candidates);
@@ -51,6 +54,33 @@ export default function App() {
   const handleUndoLastDraw = () => {
     try {
       luckyDraw.undoLastDraw();
+      setDrawError('');
+    } catch (err) {
+      setDrawError(err.message);
+    }
+  };
+
+  const handleMarkForfeited = (drawId, winnerName, reason) => {
+    try {
+      luckyDraw.markWinnerAsForfeited(drawId, winnerName, reason);
+      setDrawError('');
+    } catch (err) {
+      setDrawError(err.message);
+    }
+  };
+
+  const handleRedraw = (drawId, reason) => {
+    try {
+      luckyDraw.redrawForfeitedSlots(drawId, reason);
+      setDrawError('');
+    } catch (err) {
+      setDrawError(err.message);
+    }
+  };
+
+  const handleUndoLastForfeit = (drawId) => {
+    try {
+      luckyDraw.undoLastForfeit(drawId);
       setDrawError('');
     } catch (err) {
       setDrawError(err.message);
@@ -117,13 +147,29 @@ export default function App() {
                   winners={luckyDraw.currentDraw.winners}
                   prizeLabel={luckyDraw.currentDraw.prizeName}
                   timestamp={luckyDraw.currentDraw.timestamp}
+                  onManageForfeits={() => setForfeitManagerOpen(true)}
                 />
                 <ResultActions
                   winners={luckyDraw.currentDraw.winners}
                   prizeLabel={luckyDraw.currentDraw.prizeName}
                 />
+                {luckyDraw.currentDraw.redrawHistory && luckyDraw.currentDraw.redrawHistory.length > 0 && (
+                  <RedrawHistory
+                    draw={luckyDraw.currentDraw}
+                    onUndoLastForfeit={handleUndoLastForfeit}
+                  />
+                )}
               </>
             )}
+
+            {/* Forfeit Manager Modal */}
+            <ForfeitManager
+              isOpen={forfeitManagerOpen}
+              onClose={() => setForfeitManagerOpen(false)}
+              draw={luckyDraw.currentDraw}
+              onMarkForfeited={handleMarkForfeited}
+              onRedraw={handleRedraw}
+            />
 
             <DrawHistory
               history={luckyDraw.history}
