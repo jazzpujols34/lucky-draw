@@ -52,18 +52,77 @@ export default function DrawHistory({
               <span className="font-semibold">Prize:</span> {draw.prizeName || draw.prizeLabel || 'N/A'}
             </p>
 
-            <div className="text-sm">
-              <p className="font-semibold text-gray-300 mb-1">Winners:</p>
-              <div className="flex flex-wrap gap-2">
-                {draw.winners.map((winner, i) => (
-                  <span
-                    key={i}
-                    className="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded text-xs"
-                  >
-                    {typeof winner === 'string' ? winner : winner.name}
-                  </span>
-                ))}
-              </div>
+            <div className="text-sm space-y-2">
+              {/* Get final valid winners only (status === 'won') */}
+              {(() => {
+                const finalWinners = draw.winners.filter(
+                  w => (typeof w === 'string') || (w.status === 'won')
+                );
+                const replacementWinners = draw.winners.filter(
+                  w => typeof w !== 'string' && w.isReplacement
+                );
+                const forfeitedWinners = draw.winners.filter(
+                  w => typeof w !== 'string' && w.status === 'forfeited'
+                );
+
+                return (
+                  <>
+                    {/* Final Valid Winners */}
+                    <div>
+                      <p className="font-semibold text-emerald-400 mb-1">
+                        Final Winners ({finalWinners.length}):
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {finalWinners.map((winner, i) => (
+                          <span
+                            key={i}
+                            className="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded text-xs"
+                          >
+                            {typeof winner === 'string' ? winner : winner.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Forfeit → Replacement Mapping */}
+                    {draw.redrawHistory && draw.redrawHistory.length > 0 && (
+                      <div className="border-t border-gray-600 pt-2 mt-2">
+                        <p className="font-semibold text-yellow-400 mb-1">
+                          Forfeit Mapping ({draw.redrawHistory.length}):
+                        </p>
+                        <div className="space-y-1">
+                          {draw.redrawHistory.map((entry, i) => (
+                            <div
+                              key={i}
+                              className="bg-gray-700/50 rounded px-2 py-1 text-xs text-gray-300 flex items-center gap-2"
+                            >
+                              <span className="text-red-400 line-through">
+                                {entry.forfeitedWinner}
+                              </span>
+                              <span className="text-gray-500">→</span>
+                              <span className="text-blue-400">
+                                {entry.replacementWinner}
+                              </span>
+                              {entry.reason && (
+                                <span className="text-gray-500 italic ml-auto">
+                                  ({entry.reason})
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Forfeited Winners Indicator */}
+                    {forfeitedWinners.length > 0 && (
+                      <div className="text-gray-500 text-xs italic">
+                        Note: {forfeitedWinners.length} winner{forfeitedWinners.length !== 1 ? 's' : ''} forfeited (replaced above)
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         ))}

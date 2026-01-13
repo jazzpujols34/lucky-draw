@@ -309,7 +309,14 @@ export const useLuckyDraw = () => {
       reason,
     }));
 
-    // STEP 5: Update draw record with partial consolidation
+    // STEP 5: Remove replacement winners from available candidates
+    // CRITICAL INVARIANT: candidate_pool = all - drawn - forfeited
+    // Replacement winners must be removed immediately to prevent duplicates
+    setAvailableCandidates(prev =>
+      prev.filter(name => !newWinnersList.includes(name))
+    );
+
+    // STEP 6: Update draw record with partial consolidation
     // Final winners = original winners (both won & forfeited) + replacement winners
     // Display logic filters to show: status === 'won' (excludes forfeited automatically)
     const updatedDraw = {
@@ -319,7 +326,7 @@ export const useLuckyDraw = () => {
       redrawHistory: [...(draw.redrawHistory || []), ...redrawEntries],
     };
 
-    // Update both history and currentDraw
+    // STEP 7: Update both history and currentDraw
     setHistory(prevHistory =>
       prevHistory.map((d, idx) => {
         if (d.id === drawId) {
@@ -333,7 +340,7 @@ export const useLuckyDraw = () => {
     if (currentDraw && currentDraw.id === drawId) {
       setCurrentDraw(updatedDraw);
     }
-  }, [history, candidatePool, currentDraw]);
+  }, [history, candidatePool, currentDraw, availableCandidates]);
 
   const undoLastForfeit = useCallback((drawId) => {
     const drawIndex = history.findIndex(d => d.id === drawId);
