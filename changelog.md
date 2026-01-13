@@ -76,21 +76,78 @@ All notable changes to the Lucky Draw Web App are documented here.
 - Smooth transitions: 200ms color changes, 0.5s animations
 - Responsive spacing: Generous padding for legibility
 
+## [1.1.0] - 2026-01-13
+
+### ✨ Features Added
+
+#### Phase 1: localStorage Persistence
+- **Auto-Save**: Prizes, history, and candidates automatically saved to localStorage
+- **Session Recovery**: Data persists across browser refresh
+- **Smart Loading**: Loads saved state on app startup
+- **Backward Compatibility**: Handles both old (string[]) and new (object[]) data formats
+
+#### Phase 2: Prize Configuration
+- **Prize Management**: Create, edit, delete prizes before events
+- **Prize Properties**: Name, winner count, optional description
+- **Status Tracking**: Marks prizes as active/drawn
+- **Selection Mode**: Switch between predefined prizes and custom ad-hoc draws
+- **Auto-populate**: Selected prize auto-fills name and winner count
+- **Draw Locking**: Prevents deletion of already-drawn prizes
+
+#### Phase 3: Winner Forfeit & Redraw
+- **Forfeit Marking**: Mark winners as absent/forfeited with optional reason
+- **Status Indicators**: Visual badges show won/forfeited/replacement status
+- **Color Coding**: Green (active), Red (forfeited), Blue (replacement)
+- **Forfeit Manager Modal**: Multi-select interface for marking forfeits
+- **Redraw Algorithm**: Fair Fisher-Yates selection for replacements
+- **Exclusion Safeguards**: Prevents re-drawing forfeited winners or existing winners
+- **Redraw History**: Complete audit trail of all forfeit→replacement mappings
+- **Undo Support**: Reverse last forfeit/redraw operation
+- **Multiple Redraws**: Same prize can be redrawn multiple times
+
+### 🏗️ Technical Enhancements
+
+#### localStorage Strategy
+- Storage keys: `luckyDraw_prizes`, `luckyDraw_history`, `luckyDraw_candidates`
+- Sync pattern: Load on mount, save on every state change
+- Error handling: Graceful fallback if quota exceeded or parse fails
+
+#### Enhanced Data Models
+- **Prize Object**: id, name, winnerCount, description, createdAt, status
+- **Winner Object**: name, status (won/forfeited), forfeitedAt, replacedBy, isReplacement, originalWinner
+- **Draw Record**: id (UUID), drawNumber (sequential), redrawHistory (audit trail)
+- **Redraw Entry**: drawId, forfeitedWinner, replacementWinner, timestamp, reason
+
+#### New Components
+- `storage.js`: Centralized localStorage utilities
+- `PrizeSetup.jsx`: Prize creation/management UI
+- `PrizeCard.jsx`: Individual prize display/edit
+- `ForfeitManager.jsx`: Modal for forfeit and redraw operations
+- `RedrawHistory.jsx`: Audit trail display component
+
+#### Modified Components
+- `useLuckyDraw.js`: Added prize state, forfeit methods, persistence hooks
+- `DrawSettings.jsx`: Prize selection mode toggle
+- `WinnerDisplay.jsx`: Status indicators and "Manage Forfeits" button
+- `App.jsx`: New layout integration for prizes and forfeit manager
+
 ## Known Limitations
 
 ### Current Version
-- **No Persistence**: Data lost on page refresh
 - **No Authentication**: Single-user, public access
 - **No Real-time Sync**: Not designed for multi-device sessions
-- **Offline-Only**: No cloud backup or sync
+- **localStorage Only**: No cloud backup or remote sync
 - **Local Files Only**: Cannot fetch remote CSV/Excel files
+- **No Search**: Cannot search/filter large candidate lists
 
 ### Future Considerations
-- Add localStorage for session persistence
 - Implement progressive web app (PWA) features
-- Add user preferences (dark/light theme toggle)
+- Add user preferences (dark/light theme toggle, language)
 - Support custom color schemes
 - Event templates & presets
+- Search/filter for large lists
+- Analytics on draw patterns
+- Export audit trail (forfeit history) to CSV
 
 ## Testing
 
@@ -143,6 +200,6 @@ Built with:
 
 ---
 
-**Last Updated**: 2026-01-07
-**Version**: 1.0.0
-**Status**: Production Ready for Events
+**Last Updated**: 2026-01-13
+**Version**: 1.1.0
+**Status**: Production Ready with Forfeit Handling & Persistence
