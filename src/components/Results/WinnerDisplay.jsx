@@ -10,9 +10,9 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
     typeof w === 'string' ? { name: w, status: 'won' } : w
   );
 
-  // Filter to show only active winners (exclude forfeited ones)
-  const activeWinners = normalizedWinners.filter(w => w.status === 'won' && !w.isReplacement);
-  const displayWinners = activeWinners.length > 0 ? activeWinners : normalizedWinners;
+  // Display all winners with status 'won' (both original and replacement)
+  // Exclude only forfeited winners from display
+  const displayWinners = normalizedWinners.filter(w => w.status === 'won');
 
   return (
     <div className="card p-8 space-y-6">
@@ -45,25 +45,25 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {displayWinners.map((winner, index) => {
-          // Determine card styling based on status
+          // Determine card styling based on winner type
           let borderColor = 'border-emerald-500/50';
           let bgColor = 'from-emerald-500/20 to-cyan-500/20';
           let textColor = 'text-emerald-400';
           let nameColor = 'text-gray-100';
           let shadowColor = 'hover:shadow-emerald-500/50';
+          let badgeText = 'Valid';
+          let badgeColor = 'bg-emerald-600';
 
-          if (winner.status === 'forfeited') {
-            borderColor = 'border-red-500/50';
-            bgColor = 'from-red-500/10 to-red-500/10';
-            textColor = 'text-red-400';
-            nameColor = 'text-gray-400 line-through';
-            shadowColor = 'hover:shadow-red-500/50';
-          } else if (winner.isReplacement) {
+          // Determine card type
+          if (winner.isReplacement) {
+            // Replacement winner (redraw)
             borderColor = 'border-blue-500/50';
             bgColor = 'from-blue-500/20 to-cyan-500/20';
             textColor = 'text-blue-400';
             nameColor = 'text-blue-100';
             shadowColor = 'hover:shadow-blue-500/50';
+            badgeText = 'Replacement';
+            badgeColor = 'bg-blue-600';
           }
 
           return (
@@ -74,36 +74,25 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
                 animationDelay: `${index * 0.1}s`,
               }}
             >
-              {/* Status badge */}
-              {winner.status === 'forfeited' && (
-                <div className="absolute top-3 right-3 bg-red-600 text-white text-xs px-2 py-1 rounded">
-                  Forfeited
-                </div>
-              )}
-              {winner.isReplacement && (
-                <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                  Replacement
-                </div>
-              )}
+              {/* Status badge - shows winner type */}
+              <div className={`absolute top-3 right-3 ${badgeColor} text-white text-xs px-2 py-1 rounded`}>
+                {badgeText}
+              </div>
 
+              {/* Position number */}
               <div className={`text-4xl font-black ${textColor} mb-3`}>
                 #{index + 1}
               </div>
+
+              {/* Winner name */}
               <p className={`font-bold ${nameColor} px-2 text-sm sm:text-base md:text-lg break-words whitespace-normal`}>
                 {winner.name || winner}
               </p>
 
-              {/* Replacement info */}
+              {/* Replacement info - show who they replaced */}
               {winner.isReplacement && winner.originalWinner && (
                 <p className="text-xs text-blue-300 mt-2 italic">
-                  Replaces {winner.originalWinner}
-                </p>
-              )}
-
-              {/* Replaced by info */}
-              {winner.status === 'forfeited' && winner.replacedBy && (
-                <p className="text-xs text-red-300 mt-2 italic">
-                  Replaced by {winner.replacedBy}
+                  Replaced: {winner.originalWinner}
                 </p>
               )}
             </div>

@@ -238,7 +238,7 @@ export const useLuckyDraw = () => {
 
     const draw = history[drawIndex];
 
-    // Find forfeited winners
+    // STEP 1: Identify forfeited slots
     const forfeited = draw.winners.filter(w => w.status === 'forfeited');
     const countToRedraw = forfeited.length;
 
@@ -246,13 +246,15 @@ export const useLuckyDraw = () => {
       throw new Error('No forfeited winners to redraw');
     }
 
-    // Build exclusion list
+    // STEP 2: Build exclusion set (never redraw these people)
     const exclude = new Set();
 
-    // Exclude all current winners (won or forfeited)
+    // Exclude all winners from this prize (original + forfeited + previous replacements)
+    // This ensures we don't redraw someone who already won or already forfeited
     draw.winners.forEach(w => exclude.add(w.name));
 
-    // Exclude anyone in redraw history (prevent re-forfeit loop)
+    // Exclude anyone in redraw history (prevent re-selecting from previous redraws)
+    // This prevents re-forfeiting the same person multiple times
     if (draw.redrawHistory) {
       draw.redrawHistory.forEach(entry => {
         exclude.add(entry.forfeitedWinner);
@@ -260,19 +262,23 @@ export const useLuckyDraw = () => {
       });
     }
 
-    // Filter candidate pool
-    const eligibleCandidates = availableCandidates.filter(
+    // STEP 3: Filter candidate pool to eligible candidates
+    // Use FULL candidatePool (not just availableCandidates) for redraw
+    // This allows redrawing from people who haven't been involved yet
+    // Eligible = in original pool + not in exclusion set
+    const eligibleCandidates = candidatePool.filter(
       name => !exclude.has(name)
     );
 
-    // Validate sufficient candidates
+    // Validate sufficient candidates exist
     if (eligibleCandidates.length < countToRedraw) {
       throw new Error(
         `Not enough candidates (need ${countToRedraw}, have ${eligibleCandidates.length})`
       );
     }
 
-    // Draw new winners using Fisher-Yates
+    // STEP 4: Draw exact number of replacement winners using Fisher-Yates
+    // CRITICAL: Only draw countToRedraw new winners, NOT all original winners
     const newWinnersList = drawWinners(eligibleCandidates, countToRedraw);
 
     // Create replacement winner objects
@@ -285,7 +291,7 @@ export const useLuckyDraw = () => {
       originalWinner: forfeited[idx].name,
     }));
 
-    // Create redraw history entries
+    // Create redraw history entries (audit trail)
     const redrawEntries = forfeited.map((original, idx) => ({
       drawId,
       forfeitedWinner: original.name,
@@ -294,20 +300,31 @@ export const useLuckyDraw = () => {
       reason,
     }));
 
-    // Update draw record
+    // STEP 5: Update draw record with partial consolidation
+    // Final winners = original winners (both won & forfeited) + replacement winners
+    // Display logic filters to show: status === 'won' (excludes forfeited automatically)
+    const updatedDraw = {
+      ...draw,
+      // Consolidation: preserve all original winners + append replacements only
+      winners: [...draw.winners, ...replacements],
+      redrawHistory: [...(draw.redrawHistory || []), ...redrawEntries],
+    };
+
+    // Update both history and currentDraw
     setHistory(prevHistory =>
-      prevHistory.map((draw, idx) => {
-        if (draw.id === drawId) {
-          return {
-            ...draw,
-            winners: [...draw.winners, ...replacements],
-            redrawHistory: [...(draw.redrawHistory || []), ...redrawEntries],
-          };
+      prevHistory.map((d, idx) => {
+        if (d.id === drawId) {
+          return updatedDraw;
         }
-        return draw;
+        return d;
       })
     );
-  }, [history, availableCandidates]);
+
+    // Also update currentDraw if it's the current draw
+    if (currentDraw && currentDraw.id === drawId) {
+      setCurrentDraw(updatedDraw);
+    }
+  }, [history, candidatePool, currentDraw]);
 
   const undoLastForfeit = useCallback((drawId) => {
     const drawIndex = history.findIndex(d => d.id === drawId);
