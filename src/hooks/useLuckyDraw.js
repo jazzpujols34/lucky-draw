@@ -108,11 +108,19 @@ export const useLuckyDraw = () => {
     return drawRecord;
   }, [availableCandidates, history, nextDrawNumber]);
 
+  // Reset prize statuses from 'drawn' back to 'active'
+  const resetPrizes = useCallback(() => {
+    setPrizes(prevPrizes =>
+      prevPrizes.map(p => ({ ...p, status: 'active' }))
+    );
+  }, []);
+
   // Reset available pool (but keep history)
   const resetPool = useCallback(() => {
     setAvailableCandidates(candidatePool);
     setCurrentDraw(null);
-  }, [candidatePool]);
+    resetPrizes();  // Also reset prize statuses
+  }, [candidatePool, resetPrizes]);
 
   // Clear everything
   const clearAll = useCallback(() => {
@@ -120,7 +128,8 @@ export const useLuckyDraw = () => {
     setAvailableCandidates([]);
     setCurrentDraw(null);
     setHistory([]);
-  }, []);
+    resetPrizes();  // Also reset prize statuses
+  }, [resetPrizes]);
 
   // Clear history only
   const clearHistory = useCallback(() => {
