@@ -12,6 +12,7 @@ import DrawHistory from './components/History/DrawHistory';
 import ForfeitManager from './components/Results/ForfeitManager';
 import RedrawHistory from './components/Results/RedrawHistory';
 import AnimationSettings from './components/DrawConfig/AnimationSettings';
+import AnimationControlBar from './components/Results/AnimationControlBar';
 
 export default function App() {
   const luckyDraw = useLuckyDraw();
@@ -22,6 +23,7 @@ export default function App() {
   const [drawError, setDrawError] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
   const [forfeitManagerOpen, setForfeitManagerOpen] = useState(false);
+  const [showCurrentDraw, setShowCurrentDraw] = useState(true);
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(2000);
 
@@ -38,10 +40,15 @@ export default function App() {
     }
   };
 
+  const handleDismissCurrentDraw = () => {
+    setShowCurrentDraw(false);
+  };
+
   const handleDraw = async () => {
     try {
       setDrawError('');
       setIsDrawing(true);
+      setShowCurrentDraw(true);
 
       // Simulate brief animation delay
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -150,13 +157,14 @@ export default function App() {
 
           {/* Right Column: Results & History */}
           <div className="lg:col-span-1 space-y-6">
-            {luckyDraw.currentDraw && (
+            {luckyDraw.currentDraw && showCurrentDraw && (
               <>
                 <WinnerDisplay
                   winners={luckyDraw.currentDraw.winners}
                   prizeLabel={luckyDraw.currentDraw.prizeName}
                   timestamp={luckyDraw.currentDraw.timestamp}
                   onManageForfeits={() => setForfeitManagerOpen(true)}
+                  onDismiss={handleDismissCurrentDraw}
                   animationEnabled={animationEnabled}
                   animationSpeed={animationSpeed}
                 />

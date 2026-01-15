@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { Trophy, Edit2, Pause, Play } from 'lucide-react';
 import { useSequentialReveal } from '../../hooks/useSequentialReveal';
+import AnimationControlBar from './AnimationControlBar';
 
 export default function WinnerDisplay({
   winners,
   prizeLabel,
   timestamp,
   onManageForfeits,
+  onDismiss = null,
   animationEnabled = false,
   animationSpeed = 800,
 }) {
@@ -180,6 +182,15 @@ export default function WinnerDisplay({
           {displayWinners.length} {displayWinners.length === 1 ? 'Winner' : 'Winners'}
         </p>
       </div>
+
+      {/* Animation Control Bar - Floating action bar during animation */}
+      <AnimationControlBar
+        isAnimating={isAnimating}
+        isPaused={isPaused}
+        onPause={pause}
+        onResume={resume}
+        onCancel={onDismiss}
+      />
     </div>
   );
 }
