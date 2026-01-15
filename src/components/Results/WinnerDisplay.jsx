@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Trophy, Edit2, Pause, Play } from 'lucide-react';
 import { useSequentialReveal } from '../../hooks/useSequentialReveal';
 
@@ -14,16 +15,25 @@ export default function WinnerDisplay({
   }
 
   // Handle both old (string[]) and new (WinnerObject[]) formats
-  const normalizedWinners = winners.map(w =>
-    typeof w === 'string' ? { name: w, status: 'won' } : w
+  const normalizedWinners = useMemo(
+    () => winners.map(w =>
+      typeof w === 'string' ? { name: w, status: 'won' } : w
+    ),
+    [winners]
   );
 
   // Display all winners with status 'won' (both original and replacement)
   // Exclude only forfeited winners from display
-  const displayWinners = normalizedWinners.filter(w => w.status === 'won');
+  const displayWinners = useMemo(
+    () => normalizedWinners.filter(w => w.status === 'won'),
+    [normalizedWinners]
+  );
 
   // Detect if any winners are replacements (skip animation for redraw)
-  const hasReplacements = normalizedWinners.some(w => w.isReplacement);
+  const hasReplacements = useMemo(
+    () => normalizedWinners.some(w => w.isReplacement),
+    [normalizedWinners]
+  );
 
   // Use sequential reveal hook
   const {
