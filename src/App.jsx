@@ -110,9 +110,9 @@ export default function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Left Column: Input & Prizes */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 lg:order-1 order-2 space-y-6">
             <ManualInput onCandidatesLoaded={handleCandidatesLoaded} />
             <FileUpload onCandidatesLoaded={handleCandidatesLoaded} />
             <CandidateList
@@ -127,36 +127,10 @@ export default function App() {
               onUpdatePrize={luckyDraw.updatePrize}
               onDeletePrize={luckyDraw.deletePrize}
             />
-            <AnimationSettings
-              enabled={animationEnabled}
-              speed={animationSpeed}
-              onToggle={setAnimationEnabled}
-              onSpeedChange={setAnimationSpeed}
-            />
           </div>
 
-          {/* Middle Column: Draw Controls */}
-          <div className="lg:col-span-1 space-y-6">
-            <DrawSettings
-              prizeLabel={prizeLabel}
-              winnerCount={winnerCount}
-              availableCount={luckyDraw.availableCount}
-              onPrizeLabelChange={setPrizeLabel}
-              onWinnerCountChange={setWinnerCount}
-              prizes={luckyDraw.prizes}
-              selectedPrizeId={selectedPrizeId}
-              onPrizeSelect={handlePrizeSelect}
-            />
-            <DrawButton
-              isEnabled={luckyDraw.candidateCount > 0}
-              isLoading={isDrawing}
-              onDraw={handleDraw}
-              error={drawError}
-            />
-          </div>
-
-          {/* Right Column: Results & History */}
-          <div className="lg:col-span-1 space-y-6">
+          {/* Center Column: Results & History ⭐ */}
+          <div className="lg:col-span-2 lg:order-2 order-1 space-y-6">
             {luckyDraw.currentDraw && showCurrentDraw && (
               <>
                 <WinnerDisplay
@@ -194,6 +168,32 @@ export default function App() {
               history={luckyDraw.history}
               onClearHistory={luckyDraw.clearHistory}
               onUndoLastDraw={handleUndoLastDraw}
+            />
+          </div>
+
+          {/* Right Column: Draw Controls */}
+          <div className="lg:col-span-1 lg:order-3 order-3 space-y-6">
+            <DrawSettings
+              prizeLabel={prizeLabel}
+              winnerCount={winnerCount}
+              availableCount={luckyDraw.availableCount}
+              onPrizeLabelChange={setPrizeLabel}
+              onWinnerCountChange={setWinnerCount}
+              prizes={luckyDraw.prizes}
+              selectedPrizeId={selectedPrizeId}
+              onPrizeSelect={handlePrizeSelect}
+            />
+            <DrawButton
+              isEnabled={luckyDraw.candidateCount > 0}
+              isLoading={isDrawing}
+              onDraw={handleDraw}
+              error={drawError}
+            />
+            <AnimationSettings
+              enabled={animationEnabled}
+              speed={animationSpeed}
+              onToggle={setAnimationEnabled}
+              onSpeedChange={setAnimationSpeed}
             />
           </div>
         </div>
