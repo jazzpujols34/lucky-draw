@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function DrawSettings({
   prizeLabel,
@@ -14,6 +14,15 @@ export default function DrawSettings({
   const maxWinners = Math.min(availableCount, 50);
   const activePrizes = prizes.filter(p => p.status === 'active');
   const selectedPrize = prizes.find(p => p.id === selectedPrizeId);
+
+  // Sync mode with selectedPrizeId when it changes
+  useEffect(() => {
+    if (selectedPrizeId) {
+      setMode('predefined');
+    } else {
+      setMode('custom');
+    }
+  }, [selectedPrizeId]);
 
   const handleModeSwitch = (newMode) => {
     setMode(newMode);
