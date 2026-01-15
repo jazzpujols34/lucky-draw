@@ -8,14 +8,14 @@ import { Zap } from 'lucide-react';
  */
 export default function AnimationSettings({
   enabled = false,
-  speed = 1500,
+  speed = 2000,
   onToggle = () => {},
   onSpeedChange = () => {},
 }) {
   const getSpeedLabel = (ms) => {
-    if (ms <= 1200) return 'Fast (1200ms)';
-    if (ms <= 1500) return 'Normal (1500ms)';
-    return 'Slow (1800ms)';
+    if (ms <= 1800) return 'Fast (1800ms)';
+    if (ms <= 2000) return 'Normal (2000ms)';
+    return 'Slow (2300ms)';
   };
 
   return (
@@ -53,16 +53,16 @@ export default function AnimationSettings({
           <input
             id="speed-slider"
             type="range"
-            min="1200"
-            max="1800"
-            step="300"
+            min="1800"
+            max="2300"
+            step="250"
             value={speed}
             onChange={(e) => onSpeedChange(parseInt(e.target.value))}
             className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
             style={{
               background: `linear-gradient(to right, rgb(16, 185, 129) 0%, rgb(16, 185, 129) ${
-                ((speed - 1200) / 600) * 100
-              }%, rgb(55, 65, 81) ${((speed - 1200) / 600) * 100}%, rgb(55, 65, 81) 100%)`,
+                ((speed - 1800) / 500) * 100
+              }%, rgb(55, 65, 81) ${((speed - 1800) / 500) * 100}%, rgb(55, 65, 81) 100%)`,
             }}
           />
 
@@ -75,9 +75,9 @@ export default function AnimationSettings({
           {/* Speed Description */}
           <div className="text-xs text-gray-400 bg-gray-800 p-2 rounded border border-gray-700">
             <p>
-              {speed === 1200 && '🚀 Fast reveal - recommended for large winner counts'}
-              {speed === 1500 && '⚡ Normal speed - balanced for drama and timing'}
-              {speed === 1800 && '🎭 Slow reveal - maximum suspense and engagement'}
+              {speed === 1800 && '🚀 Fast reveal - recommended for large winner counts'}
+              {speed === 2000 && '⚡ Normal speed - balanced for drama and timing'}
+              {speed === 2300 && '🎭 Slow reveal - maximum suspense and engagement'}
             </p>
           </div>
         </div>

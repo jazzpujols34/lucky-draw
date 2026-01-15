@@ -23,7 +23,7 @@ export default function App() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [forfeitManagerOpen, setForfeitManagerOpen] = useState(false);
   const [animationEnabled, setAnimationEnabled] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(1500);
+  const [animationSpeed, setAnimationSpeed] = useState(2000);
 
   const handleCandidatesLoaded = (candidates) => {
     luckyDraw.setCandidates(candidates);
