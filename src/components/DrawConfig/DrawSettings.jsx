@@ -133,7 +133,12 @@ export default function DrawSettings({
                   max={maxWinners}
                   value={winnerCount}
                   onChange={(e) => onWinnerCountChange(parseInt(e.target.value, 10))}
-                  className="flex-1 h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                  className="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:bg-gray-500 transition-colors"
+                  style={{
+                    background: `linear-gradient(to right, rgb(16, 185, 129) 0%, rgb(16, 185, 129) ${
+                      ((winnerCount - 1) / (maxWinners - 1)) * 100
+                    }%, rgb(75, 85, 99) ${((winnerCount - 1) / (maxWinners - 1)) * 100}%, rgb(75, 85, 99) 100%)`
+                  }}
                 />
                 <input
                   type="number"
@@ -146,7 +151,7 @@ export default function DrawSettings({
                       onWinnerCountChange(val);
                     }
                   }}
-                  className="w-16 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:border-cyan-500 text-center"
+                  className="w-16 bg-gray-600 border-2 border-emerald-500 rounded-lg px-3 py-2 text-gray-100 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/50 text-center font-bold hover:bg-gray-500 transition-colors cursor-pointer"
                 />
               </div>
               <p className="text-xs text-gray-400 mt-2">
