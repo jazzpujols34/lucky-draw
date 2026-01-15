@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Hook for sequential winner reveal animation with countdown
@@ -28,6 +28,7 @@ export const useSequentialReveal = (
   const timerRef = useRef(null);
   const shouldContinueRef = useRef(true);
   const indexRef = useRef(0);
+  const isPausedRef = useRef(false);
 
   // Cleanup function to clear timers
   const clearAnimation = () => {
@@ -38,77 +39,90 @@ export const useSequentialReveal = (
   };
 
   // Sleep helper for async animation loop
-  const sleep = (ms) => new Promise(resolve => {
-    timerRef.current = setTimeout(resolve, ms);
-  });
+  const sleep = (ms) =>
+    new Promise((resolve) => {
+      timerRef.current = setTimeout(resolve, ms);
+    });
 
   // Pause animation
-  const pause = () => {
+  const pause = useCallback(() => {
+    isPausedRef.current = true;
     setIsPaused(true);
     clearAnimation();
-  };
+  }, []);
 
   // Resume animation from current index
-  const resume = () => {
+  const resume = useCallback(() => {
+    isPausedRef.current = false;
     setIsPaused(false);
-    // Restart animation loop from current position
-    continueAnimation(indexRef.current);
-  };
-
-  // Continue animation from specific index
-  const continueAnimation = async (startIndex) => {
-    if (!shouldContinueRef.current || startIndex >= winners.length) {
-      setIsAnimating(false);
-      setPhase('complete');
-      if (onComplete) onComplete();
-      return;
+    // Continue animation from next winner
+    if (indexRef.current < winners.length) {
+      continueReveal(indexRef.current);
     }
-
-    setIsAnimating(true);
-    indexRef.current = startIndex;
-
-    for (let i = startIndex; i < winners.length && shouldContinueRef.current; i++) {
-      if (isPaused) break;
-
-      // Countdown phase: 3 → 2 → 1
-      for (let count = 3; count > 0; count--) {
-        if (!shouldContinueRef.current || isPaused) break;
-        setCountdown(count);
-        setPhase('countdown');
-        await sleep(speed * 0.3); // 30% of speed per countdown tick
-      }
-
-      if (!shouldContinueRef.current || isPaused) break;
-
-      // Reveal phase
-      setCountdown(null);
-      setPhase('reveal');
-      setCurrentIndex(i);
-      await sleep(speed * 0.4); // 40% of speed for reveal hold
-
-      indexRef.current = i + 1;
-    }
-
-    setIsAnimating(false);
-    setPhase('complete');
-    if (onComplete) onComplete();
-  };
+  }, [winners]);
 
   // Reset animation
-  const reset = () => {
+  const reset = useCallback(() => {
     clearAnimation();
+    shouldContinueRef.current = false;
     setCurrentIndex(-1);
     setCountdown(null);
     setIsAnimating(false);
     setIsPaused(false);
     setPhase('idle');
-    shouldContinueRef.current = true;
+    isPausedRef.current = false;
     indexRef.current = 0;
-  };
+  }, []);
+
+  // Main reveal loop
+  const continueReveal = useCallback(
+    async (startIndex) => {
+      // Early exit if conditions not met
+      if (!shouldContinueRef.current || startIndex >= winners.length) {
+        setIsAnimating(false);
+        setPhase('complete');
+        if (onComplete) onComplete();
+        return;
+      }
+
+      for (let i = startIndex; i < winners.length && shouldContinueRef.current; i++) {
+        // Check pause status
+        while (isPausedRef.current && shouldContinueRef.current) {
+          await sleep(100); // Check pause every 100ms
+        }
+
+        if (!shouldContinueRef.current) break;
+
+        // Countdown phase: 3 → 2 → 1
+        for (let count = 3; count > 0; count--) {
+          if (!shouldContinueRef.current || isPausedRef.current) break;
+          setCountdown(count);
+          setPhase('countdown');
+          await sleep(speed * 0.3); // 30% of speed per countdown tick
+        }
+
+        if (!shouldContinueRef.current || isPausedRef.current) break;
+
+        // Reveal phase
+        setCountdown(null);
+        setPhase('reveal');
+        setCurrentIndex(i);
+        indexRef.current = i;
+        await sleep(speed * 0.4); // 40% of speed for reveal hold
+      }
+
+      setIsAnimating(false);
+      setCountdown(null);
+      setPhase('complete');
+      if (onComplete) onComplete();
+    },
+    [winners.length, speed, onComplete]
+  );
 
   // Main animation effect
   useEffect(() => {
     shouldContinueRef.current = true;
+    isPausedRef.current = false;
 
     // Disable animation if: disabled, is replacement, or no winners
     if (!enabled || isReplacement || !winners || winners.length === 0) {
@@ -117,19 +131,24 @@ export const useSequentialReveal = (
         setCurrentIndex(winners.length - 1);
         setPhase('complete');
         setIsAnimating(false);
+        setCountdown(null);
+      } else {
+        reset();
       }
       return;
     }
 
     // Start animation from beginning
-    continueAnimation(0);
+    setIsAnimating(true);
+    indexRef.current = 0;
+    continueReveal(0);
 
     // Cleanup on unmount or dependency change
     return () => {
       shouldContinueRef.current = false;
       clearAnimation();
     };
-  }, [winners, enabled, speed, isReplacement]);
+  }, [winners, enabled, speed, isReplacement, continueReveal, reset]);
 
   // Return revealed winners (slice from 0 to currentIndex + 1)
   const revealedWinners =
