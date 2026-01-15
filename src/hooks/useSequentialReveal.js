@@ -121,24 +121,26 @@ export const useSequentialReveal = (
 
   // Main animation effect
   useEffect(() => {
-    shouldContinueRef.current = true;
-    isPausedRef.current = false;
-
-    // Disable animation if: disabled, is replacement, or no winners
-    if (!enabled || isReplacement || !winners || winners.length === 0) {
-      if (winners && winners.length > 0) {
-        // Show all winners instantly
-        setCurrentIndex(winners.length - 1);
-        setPhase('complete');
-        setIsAnimating(false);
-        setCountdown(null);
-      } else {
-        reset();
-      }
+    // Early exit if no winners or animation disabled
+    if (!winners || winners.length === 0) {
+      reset();
       return;
     }
 
-    // Start animation from beginning
+    // Exit if animation disabled or is replacement
+    if (!enabled || isReplacement) {
+      // Show all winners instantly
+      setCurrentIndex(winners.length - 1);
+      setPhase('complete');
+      setIsAnimating(false);
+      setCountdown(null);
+      return;
+    }
+
+    // Now we can safely start animation
+    shouldContinueRef.current = true;
+    isPausedRef.current = false;
+
     setIsAnimating(true);
     indexRef.current = 0;
     continueReveal(0);
