@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLuckyDraw } from './hooks/useLuckyDraw';
-import ManualInput from './components/CandidateInput/ManualInput';
-import FileUpload from './components/CandidateInput/FileUpload';
+import CandidateInputMode from './components/CandidateInput/CandidateInputMode';
 import CandidateList from './components/CandidateInput/CandidateList';
 import PrizeSetup from './components/DrawConfig/PrizeSetup';
 import DrawSettings from './components/DrawConfig/DrawSettings';
@@ -113,8 +112,7 @@ export default function App() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Left Column: Input & Prizes */}
           <div className="lg:col-span-1 lg:order-1 order-2 space-y-6">
-            <ManualInput onCandidatesLoaded={handleCandidatesLoaded} />
-            <FileUpload onCandidatesLoaded={handleCandidatesLoaded} />
+            <CandidateInputMode onCandidatesLoaded={handleCandidatesLoaded} />
             <CandidateList
               totalCandidates={luckyDraw.candidateCount}
               availableCandidates={luckyDraw.availableCount}
