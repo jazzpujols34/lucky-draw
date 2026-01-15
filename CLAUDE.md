@@ -152,3 +152,8 @@ App (root state provider)
 - [Architecture Details](./architecture.md) - Component structure & data flow
 - [Development Changelog](./changelog.md) - Feature history
 - [Project Status](./project-status.md) - Progress & roadmap
+
+## Plan Mode
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.

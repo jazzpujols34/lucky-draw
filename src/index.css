@@ -31,3 +31,45 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-gray-800 border border-gray-700 rounded-xl shadow-lg;
   }
 }
+
+/* Sequential Winner Reveal Animation Keyframes */
+@keyframes countdown-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes winner-glow-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+.animate-countdown-pop {
+  animation: countdown-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-winner-glow-in {
+  animation: winner-glow-in 0.8s ease-out forwards;
+}

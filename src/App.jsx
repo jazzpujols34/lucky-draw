@@ -11,6 +11,7 @@ import ResultActions from './components/Results/ResultActions';
 import DrawHistory from './components/History/DrawHistory';
 import ForfeitManager from './components/Results/ForfeitManager';
 import RedrawHistory from './components/Results/RedrawHistory';
+import AnimationSettings from './components/DrawConfig/AnimationSettings';
 
 export default function App() {
   const luckyDraw = useLuckyDraw();
@@ -21,6 +22,8 @@ export default function App() {
   const [drawError, setDrawError] = useState('');
   const [isDrawing, setIsDrawing] = useState(false);
   const [forfeitManagerOpen, setForfeitManagerOpen] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(false);
+  const [animationSpeed, setAnimationSpeed] = useState(800);
 
   const handleCandidatesLoaded = (candidates) => {
     luckyDraw.setCandidates(candidates);
@@ -117,6 +120,12 @@ export default function App() {
               onUpdatePrize={luckyDraw.updatePrize}
               onDeletePrize={luckyDraw.deletePrize}
             />
+            <AnimationSettings
+              enabled={animationEnabled}
+              speed={animationSpeed}
+              onToggle={setAnimationEnabled}
+              onSpeedChange={setAnimationSpeed}
+            />
           </div>
 
           {/* Middle Column: Draw Controls */}
@@ -148,6 +157,8 @@ export default function App() {
                   prizeLabel={luckyDraw.currentDraw.prizeName}
                   timestamp={luckyDraw.currentDraw.timestamp}
                   onManageForfeits={() => setForfeitManagerOpen(true)}
+                  animationEnabled={animationEnabled}
+                  animationSpeed={animationSpeed}
                 />
                 <ResultActions
                   winners={luckyDraw.currentDraw.winners}

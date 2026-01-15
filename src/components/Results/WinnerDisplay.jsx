@@ -1,6 +1,14 @@
-import { Trophy, Edit2 } from 'lucide-react';
+import { Trophy, Edit2, Pause, Play } from 'lucide-react';
+import { useSequentialReveal } from '../../hooks/useSequentialReveal';
 
-export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManageForfeits }) {
+export default function WinnerDisplay({
+  winners,
+  prizeLabel,
+  timestamp,
+  onManageForfeits,
+  animationEnabled = false,
+  animationSpeed = 800,
+}) {
   if (!winners || winners.length === 0) {
     return null;
   }
@@ -13,6 +21,26 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
   // Display all winners with status 'won' (both original and replacement)
   // Exclude only forfeited winners from display
   const displayWinners = normalizedWinners.filter(w => w.status === 'won');
+
+  // Detect if any winners are replacements (skip animation for redraw)
+  const hasReplacements = normalizedWinners.some(w => w.isReplacement);
+
+  // Use sequential reveal hook
+  const {
+    revealedWinners,
+    countdown,
+    isAnimating,
+    isPaused,
+    pause,
+    resume,
+  } = useSequentialReveal(displayWinners, {
+    enabled: animationEnabled,
+    speed: animationSpeed,
+    isReplacement: hasReplacements,
+  });
+
+  // Determine which winners to render
+  const winnersToRender = isAnimating ? revealedWinners : displayWinners;
 
   return (
     <div className="card p-8 space-y-6">
@@ -43,8 +71,43 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
         )}
       </div>
 
+      {/* Countdown Overlay */}
+      {countdown !== null && isAnimating && (
+        <div
+          key={countdown}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm pointer-events-none"
+        >
+          <div className="text-[200px] font-black text-yellow-400 animate-countdown-pop">
+            {countdown}
+          </div>
+        </div>
+      )}
+
+      {/* Animation Controls */}
+      {isAnimating && (
+        <div className="flex justify-center mb-4">
+          <button
+            onClick={isPaused ? resume : pause}
+            className="btn-secondary flex items-center gap-2 px-6 py-3"
+            title={isPaused ? 'Resume animation' : 'Stop animation'}
+          >
+            {isPaused ? (
+              <>
+                <Play className="w-5 h-5" />
+                Resume Animation
+              </>
+            ) : (
+              <>
+                <Pause className="w-5 h-5" />
+                Stop Animation
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {displayWinners.map((winner, index) => {
+        {winnersToRender.map((winner, index) => {
           // Determine card styling based on winner type
           let borderColor = 'border-emerald-500/50';
           let bgColor = 'from-emerald-500/20 to-cyan-500/20';
@@ -69,9 +132,11 @@ export default function WinnerDisplay({ winners, prizeLabel, timestamp, onManage
           return (
             <div
               key={index}
-              className={`bg-gradient-to-br ${bgColor} border-2 ${borderColor} rounded-xl p-8 text-center animate-fadeIn hover:shadow-lg ${shadowColor} transition-shadow flex flex-col items-center justify-center min-h-40 relative`}
+              className={`bg-gradient-to-br ${bgColor} border-2 ${borderColor} rounded-xl p-8 text-center ${
+                isAnimating ? 'animate-winner-glow-in' : 'animate-fadeIn'
+              } hover:shadow-lg ${shadowColor} transition-shadow flex flex-col items-center justify-center min-h-40 relative`}
               style={{
-                animationDelay: `${index * 0.1}s`,
+                animationDelay: isAnimating ? '0s' : `${index * 0.1}s`,
               }}
             >
               {/* Status badge - shows winner type */}
