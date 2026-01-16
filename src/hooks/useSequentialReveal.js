@@ -16,6 +16,7 @@ export const useSequentialReveal = (
 
   const timerRef = useRef(null);
   const countdownTimerRef = useRef(null);
+  const prevWinnersRef = useRef(null);
 
   // Cleanup function
   const clearAllTimers = () => {
@@ -33,6 +34,16 @@ export const useSequentialReveal = (
         // Show all instantly if animation disabled
         setCurrentIndex(winners.length - 1);
       }
+      return;
+    }
+
+    // Check if winners actually changed (not just animation toggle)
+    // This prevents auto-starting animation when user toggles the animation setting
+    const winnersChanged = prevWinnersRef.current !== winners;
+    prevWinnersRef.current = winners;
+
+    // If only the enabled flag changed but winners stayed same, don't animate
+    if (!winnersChanged) {
       return;
     }
 
