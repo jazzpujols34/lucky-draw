@@ -53,6 +53,7 @@ export const useSequentialReveal = (
     // Animation sequence
     let currentWinnerIndex = 0;
     let isAlive = true;
+    let countdownStarted = false;
 
     const revealNextWinner = () => {
       if (!isAlive || currentWinnerIndex >= winners.length) {
@@ -70,6 +71,7 @@ export const useSequentialReveal = (
         if (!isAlive) return;
 
         if (countdownNum > 0) {
+          countdownStarted = true; // Mark that countdown has actually started
           setCountdown(countdownNum);
           countdownNum--;
           countdownTimerRef.current = setTimeout(countdownTimer, speed * 0.3);
@@ -84,7 +86,9 @@ export const useSequentialReveal = (
         }
       };
 
-      countdownTimer();
+      // Schedule first countdown with a small delay to ensure it completes
+      // before cleanup is called (which can happen on first draw due to effect re-run)
+      timerRef.current = setTimeout(countdownTimer, 50);
     };
 
     // Start animation
@@ -93,8 +97,12 @@ export const useSequentialReveal = (
 
     // Cleanup
     return () => {
-      isAlive = false;
-      clearAllTimers();
+      // Only kill animation if countdown has actually started
+      // Otherwise, pending timeouts can still fire (allowing animation to proceed)
+      if (countdownStarted) {
+        isAlive = false;
+        clearAllTimers();
+      }
     };
   }, [winners, enabled, speed, isReplacement, onComplete]);
 
