@@ -221,7 +221,7 @@ export default function App() {
 
         {/* Footer */}
         <div className="mt-16 text-center text-gray-500 text-sm">
-          <p>Lucky Draw App • Built with React + Tailwind CSS</p>
+          <p>Lucky Draw App • Built with React + Tailwind CSS • Vibe Coded by Jazz Lien™</p>
         </div>
 
         <style>{`
