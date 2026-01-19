@@ -12,6 +12,7 @@ import ForfeitManager from './components/Results/ForfeitManager';
 import RedrawHistory from './components/Results/RedrawHistory';
 import AnimationSettings from './components/DrawConfig/AnimationSettings';
 import AnimationControlBar from './components/Results/AnimationControlBar';
+import './glassmorphism.css';
 
 export default function App() {
   const luckyDraw = useLuckyDraw();
@@ -97,8 +98,19 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 py-8 px-4 w-full overflow-x-hidden">
-      <div className="w-full">
+    <div
+      className="min-h-screen text-gray-100 py-8 px-4 w-full overflow-x-hidden relative"
+      style={{
+        backgroundImage: 'url(/bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+      }}
+    >
+      {/* Semi-transparent overlay for readability */}
+      <div className="absolute inset-0 bg-black/50" />
+
+      <div className="w-full relative z-10">
         {/* Header */}
         <div className="text-center mb-12 space-y-2">
           <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
@@ -200,24 +212,24 @@ export default function App() {
         <div className="mt-16 text-center text-gray-500 text-sm">
           <p>Lucky Draw App • Built with React + Tailwind CSS</p>
         </div>
+
+        <style>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: scale(0.8);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+          }
+        `}</style>
       </div>
-
-      <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }
