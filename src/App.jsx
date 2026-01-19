@@ -123,7 +123,7 @@ export default function App() {
         {/* Header */}
         <div className="text-center mb-12 space-y-2">
           <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-            Lucky Draw
+            CloudMile 2026 Year End Party Lucky Draw
           </h1>
           <p className="text-xl text-gray-400">
             Fast, fair, and fun winner selection for your events
