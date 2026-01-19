@@ -26,6 +26,7 @@ export default function App() {
   const [showCurrentDraw, setShowCurrentDraw] = useState(true);
   const [animationEnabled, setAnimationEnabled] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useState(2000);
+  const [animationShownForDrawId, setAnimationShownForDrawId] = useState(null);
 
   const handleCandidatesLoaded = (candidates) => {
     luckyDraw.setCandidates(candidates);
@@ -49,6 +50,7 @@ export default function App() {
       setDrawError('');
       setIsDrawing(true);
       setShowCurrentDraw(true);
+      setAnimationShownForDrawId(null); // Reset animation flag for new draw
 
       // Simulate brief animation delay
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -94,6 +96,13 @@ export default function App() {
       setDrawError('');
     } catch (err) {
       setDrawError(err.message);
+    }
+  };
+
+  const handleAnimationComplete = () => {
+    // Mark animation as shown for this draw to prevent re-animation on forfeit updates
+    if (luckyDraw.currentDraw) {
+      setAnimationShownForDrawId(luckyDraw.currentDraw.id);
     }
   };
 
@@ -151,6 +160,8 @@ export default function App() {
                   onDismiss={handleDismissCurrentDraw}
                   animationEnabled={animationEnabled}
                   animationSpeed={animationSpeed}
+                  onAnimationComplete={handleAnimationComplete}
+                  skipAnimation={animationShownForDrawId === luckyDraw.currentDraw.id}
                 />
                 <ResultActions
                   winners={luckyDraw.currentDraw.winners}

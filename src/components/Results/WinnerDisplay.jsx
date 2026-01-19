@@ -11,6 +11,8 @@ export default function WinnerDisplay({
   onDismiss = null,
   animationEnabled = false,
   animationSpeed = 800,
+  onAnimationComplete = null,
+  skipAnimation = false,
 }) {
   if (!winners || winners.length === 0) {
     return null;
@@ -46,9 +48,10 @@ export default function WinnerDisplay({
     pause,
     resume,
   } = useSequentialReveal(displayWinners, {
-    enabled: animationEnabled,
+    enabled: animationEnabled && !skipAnimation,
     speed: animationSpeed,
     isReplacement: hasReplacements,
+    onComplete: onAnimationComplete,
   });
 
   // Determine which winners to render

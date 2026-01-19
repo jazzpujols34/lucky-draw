@@ -20,8 +20,17 @@ export default function ForfeitManager({
     w => w.status === 'won' && !w.isReplacement
   );
 
-  // Get forfeited winners
-  const forfeitedWinners = draw.winners.filter(w => w.status === 'forfeited');
+  // Get unreplaced forfeited winners (exclude those already redrawn for)
+  const replacedForfeited = new Set();
+  if (draw.redrawHistory) {
+    draw.redrawHistory.forEach(entry => {
+      replacedForfeited.add(entry.forfeitedWinner);
+    });
+  }
+
+  const forfeitedWinners = draw.winners.filter(
+    w => w.status === 'forfeited' && !replacedForfeited.has(w.name)
+  );
 
   const handleToggleForfeit = (winnerName) => {
     const newSelected = new Set(selectedForfeits);
