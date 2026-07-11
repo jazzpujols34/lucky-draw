@@ -1,5 +1,7 @@
 # Lucky Draw Web App
 
+> **Root conventions apply:** See `../CLAUDE.md` for coding guardrails, plan mode structure, and learned rules protocol.
+
 ## 項目目標 (Project Goals)
 
 Build a modern, fast, and intuitive web application for conducting live lottery draws at company events. The app enables:
